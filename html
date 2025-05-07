@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Image Editor</title>
+    <style>
+        :root {
+            --primary-color: #4285f4;
+            --secondary-color: #34a853;
+            --danger-color: #ea4335;
+            --light-bg: #f8f9fa;
+            --dark-text: #202124;
+            --border-radius: 8px;
+            --box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: var(--dark-text);
+            background-color: var(--light-bg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .app-header {
+            text-align: center;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+
+        .app-header h1 {
+            color: var(--primary-color);
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .app-header p {
+            color: #666;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .upload-container {
+            background-color: white;
+            padding: 20px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            width: 100%;
+            max-width: 800px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            margin: 10px auto;
+            width: 250px;
+            height: 40px;
+            overflow: hidden;
+        }
+
+        .file-input-wrapper input[type="file"] {
+            font-size: 100px;
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .file-input-button {
+            display: block;
+            width: 100%;
+            height: 100%;
+            background-color: var(--primary-color);
+            color: white;
+            text-align: center;
+            line-height: 40px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .file-input-button:hover {
+            background-color: #3367d6;
+        }
+
+        .canvas-workspace {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            max-width: 1200px;
+            gap: 20px;
+        }
+
+        .canvas-container {
+            background-color: white;
+            padding: 10px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            min-height: 300px;
+            overflow: auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        canvas {
+            display: block;
+            max-width: 100%;
+            height: auto;
+            box-shadow: 0 0 5px rgba(0,0,0,0.1);
+        }
+
+        .controls-panel {
+            background-color: white;
+            padding: 20px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        .panel-header h3 {
+            font-weight: 500;
+            color: var(--primary-color);
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .control-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .control-label {
+            min-width: 100px;
+            font-weight: 500;
+        }
+
+        .control-slider {
+            flex-grow: 1;
+            appearance: none;
+            height: 8px;
+            background: #ddd;
+            border-radius: 4px;
+            outline: none;
+            transition: opacity 0.2s;
+        }
+
+        .control-slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            cursor: pointer;
+        }
+
+        .control-slider::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            cursor: pointer;
+        }
+
+        .control-value {
+            min-width: 50px;
+            text-align: right;
+            font-weight: 500;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            min-width: 150px;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #3367d6;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #2d9247;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .btn-danger {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #5a6268;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .btn-disabled {
+            background-color: #ccc;
+            color: #666;
+            cursor: not-allowed;
+        }
+
+        .image-info {
+            margin-top: 10px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .loading-spinner {
+            display: none;
+            width: 40px;
+            height: 40px;
+            margin: 20px auto;
+            border: 4px solid rgba(0,0,0,0.1);
+            border-radius: 50%;
+            border-top: 4px solid var(--primary-color);
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Additional Controls */
+        .additional-controls {
+            border-top: 1px solid #eee;
+            margin-top: 20px;
+            padding-top: 20px;
+        }
+
+        /* For tablets */
+        @media (max-width: 768px) {
+            .controls-grid {
+                grid-template-columns: 1fr;
+            }
+            .action-buttons {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .btn {
+                width: 100%;
+            }
+        }
+
+        /* For mobile phones */
+        @media (max-width: 480px) {
+            .canvas-container {
+                min-height: 200px;
+                padding: 5px;
+            }
+            .controls-panel {
+                padding: 15px;
+            }
+            .control-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .control-label {
+                min-width: auto;
+            }
+            .control-value {
+                text-align: left;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-header">
+        <h1>Advanced Image Editor</h1>
+        <p>Upload an image and enhance it with precision adjustments for smoothness, brightness, contrast, and more</p>
+    </div>
+
+    <div class="upload-container">
+        <div class="file-input-wrapper">
+            <input type="file" id="imageLoader" name="imageLoader" accept="image/*"/>
+            <div class="file-input-button">Choose Image</div>
+        </div>
+        <div id="fileName" class="image-info"></div>
+    </div>
+
+    <div class="canvas-workspace">
+        <div class="canvas-container" id="canvasContainer">
+            <canvas id="imageCanvas"></canvas>
+        </div>
+        
+        <div class="controls-panel">
+            <div class="panel-header">
+                <h3>Image Adjustments</h3>
+                <div id="imageDetails"></div>
+            </div>
+            
+            <div class="controls-grid">
+                <div class="control-group">
+                    <div class="control-row">
+                        <label class="control-label" for="smoothness">Smooth (Blur):</label>
+                        <input type="range" class="control-slider" id="smoothness" name="smoothness" min="0" max="20" value="0" step="0.5">
+                        <output class="control-value" for="smoothness" id="smoothnessValue">0</output><span>px</span>
+                    </div>
+                    
+                    <div class="control-row">
+                        <label class="control-label" for="brightness">Brightness:</label>
+                        <input type="range" class="control-slider" id="brightness" name="brightness" min="0" max="200" value="100" step="1">
+                        <output class="control-value" for="brightness" id="brightnessValue">100</output><span>%</span>
+                    </div>
+                    
+                    <div class="control-row">
+                        <label class="control-label" for="contrast">Contrast:</label>
+                        <input type="range" class="control-slider" id="contrast" name="contrast" min="0" max="200" value="100" step="1">
+                        <output class="control-value" for="contrast" id="contrastValue">100</output><span>%</span>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <div class="control-row">
+                        <label class="control-label" for="saturation">Saturation:</label>
+                        <input type="range" class="control-slider" id="saturation" name="saturation" min="0" max="200" value="100" step="1">
+                        <output class="control-value" for="saturation" id="saturationValue">100</output><span>%</span>
+                    </div>
+                    
+                    <div class="control-row">
+                        <label class="control-label" for="grayscale">Grayscale:</label>
+                        <input type="range" class="control-slider" id="grayscale" name="grayscale" min="0" max="100" value="0" step="1">
+                        <output class="control-value" for="grayscale" id="grayscaleValue">0</output><span>%</span>
+                    </div>
+                    
+                    <div class="control-row">
+                        <label class="control-label" for="sepia">Sepia:</label>
+                        <input type="range" class="control-slider" id="sepia" name="sepia" min="0" max="100" value="0" step="1">
+                        <output class="control-value" for="sepia" id="sepiaValue">0</output><span>%</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button id="applyEffects" class="btn btn-primary" disabled>Apply Effects</button>
+                <button id="saveImage" class="btn btn-secondary" disabled>Save Image</button>
+                <button id="resetImage" class="btn btn-danger" disabled>Reset Image</button>
+            </div>
+            
+            <div id="loadingSpinner" class="loading-spinner"></div>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const imageLoader = document.getElementById('imageLoader');
+        const fileNameDisplay = document.getElementById('fileName');
+        const canvas = document.getElementById('imageCanvas');
+        const ctx = canvas.getContext('2d');
+        const imageDetails = document.getElementById('imageDetails');
+        const canvasContainer = document.getElementById('canvasContainer');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+
+        // Control Elements
+        const sliders = {
+            smoothness: document.getElementById('smoothness'),
+            brightness: document.getElementById('brightness'),
+            contrast: document.getElementById('contrast'),
+            saturation: document.getElementById('saturation'),
+            grayscale: document.getElementById('grayscale'),
+            sepia: document.getElementById('sepia')
+        };
+
+        const outputs = {
+            smoothness: document.getElementById('smoothnessValue'),
+            brightness: document.getElementById('brightnessValue'),
+            contrast: document.getElementById('contrastValue'),
+            saturation: document.getElementById('saturationValue'),
+            grayscale: document.getElementById('grayscaleValue'),
+            sepia: document.getElementById('sepiaValue')
+        };
+
+        // Buttons
+        const applyEffectsButton = document.getElementById('applyEffects');
+        const saveImageButton = document.getElementById('saveImage');
+        const resetButton = document.getElementById('resetImage');
+
+        // State variables
+        let originalImage = null;
+        let workingCanvas = document.createElement('canvas'); // For high-quality processing
+        let workingCtx = workingCanvas.getContext('2d');
+        let isProcessing = false;
+        let lastEffectValues = {}; // To track changes and avoid unnecessary processing
+
+        // Initialize slider outputs
+        Object.keys(sliders).forEach(key => {
+            outputs[key].textContent = sliders[key].value;
+            sliders[key].addEventListener('input', () => {
+                outputs[key].textContent = sliders[key].value;
+            });
+        });
+
+        // Event listeners
+        imageLoader.addEventListener('change', handleImageUpload);
+        applyEffectsButton.addEventListener('click', debounce(applyAllEffects, 300));
+        resetButton.addEventListener('click', resetToOriginal);
+        saveImageButton.addEventListener('click', saveImage);
+
+        // For slider preview (throttled to avoid performance issues)
+        Object.keys(sliders).forEach(key => {
+            sliders[key].addEventListener('input', throttle(() => {
+                if (originalImage) requestPreview();
+            }, 100));
+        });
+
+        // Make file input display the selected file name
+        imageLoader.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                fileNameDisplay.textContent = this.files[0].name;
+            } else {
+                fileNameDisplay.textContent = '';
+            }
+        });
+
+        // Create a button-like appearance for file input
+        document.querySelector('.file-input-button').addEventListener('click', function() {
+            imageLoader.click();
+        });
+
+        /**
+         * Handle image upload
+         */
+        function handleImageUpload(e) {
+            if (!e.target.files || !e.target.files[0]) return;
+            
+            const file = e.target.files[0];
+            
+            // Validate file is an image
+            if (!file.type.match('image.*')) {
+                alert("Please select a valid image file (e.g., JPG, PNG, GIF).");
+                imageLoader.value = "";
+                fileNameDisplay.textContent = "";
+                return;
+            }
+
+            const reader = new FileReader();
+            showLoading(true);
+            
+            reader.onload = function(event) {
+                originalImage = new Image();
+                originalImage.onload = function() {
+                    setupCanvasForImage(this);
+                    updateImageDetails();
+                    
+                    // Enable buttons
+                    applyEffectsButton.disabled = false;
+                    saveImageButton.disabled = false;
+                    resetButton.disabled = false;
+                    
+                    // Initialize working canvas with full resolution
+                    workingCanvas.width = originalImage.width;
+                    workingCanvas.height = originalImage.height;
+                    workingCtx.drawImage(originalImage, 0, 0);
+                    
+                    showLoading(false);
+                }
+                originalImage.onerror = () => {
+                    alert("Error loading image. Please try a different file.");
+                    clearAll();
+                    showLoading(false);
+                }
+                originalImage.src = event.target.result;
+            }
+            
+            reader.onerror = () => {
+                alert("Error reading file. Please try again.");
+                clearAll();
+                showLoading(false);
+            }
+            
+            reader.readAsDataURL(file);
+        }
+
+        /**
+         * Set up the canvas for the loaded image
+         */
+        function setupCanvasForImage(image) {
+            const containerWidth = canvasContainer.clientWidth - 20; // Account for padding
+            const containerHeight = canvasContainer.clientHeight - 20;
+            
+            // Calculate display dimensions (responsive)
+            let displayWidth = image.width;
+            let displayHeight = image.height;
+            
+            // Scale down if image is larger than container
+            if (displayWidth > containerWidth) {
+                const ratio = containerWidth / displayWidth;
+                displayWidth = containerWidth;
+                displayHeight = displayHeight * ratio;
+            }
+            
+            if (displayHeight > containerHeight) {
+                const ratio = containerHeight / displayHeight;
+                displayHeight = containerHeight;
+                displayWidth = displayWidth * ratio;
+            }
+            
+            // Set canvas display size
+            canvas.width = displayWidth;
+            canvas.height = displayHeight;
+            
+            // Clear and draw image
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(image, 0, 0, displayWidth, displayHeight);
+        }
+
+        /**
+         * Update image information display
+         */
+        function updateImageDetails() {
+            if (originalImage) {
+                imageDetails.textContent = `${originalImage.width} × ${originalImage.height} pixels`;
+            } else {
+                imageDetails.textContent = '';
+            }
+        }
+
+        /**
+         * Request a preview of the current adjustments (lightweight)
+         */
+        function requestPreview() {
+            if (!originalImage || isProcessing) return;
+            
+            // For preview, we can use the display canvas directly
+            const filterString = buildFilterString();
+            
+            // Apply filters directly to the display canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.filter = filterString;
+            ctx.drawImage(originalImage, 0, 0, canvas.width, canvas.height);
+            ctx.filter = 'none';
+        }
+
+        /**
+         * Apply all effects at full quality
+         */
+        function applyAllEffects() {
+            if (!originalImage || isProcessing) return;
+            
+            isProcessing = true;
+            showLoading(true);
+            
+            // Use a small delay to allow the UI to update before processing
+            setTimeout(() => {
+                try {
+                    // Get current filter values and build filter string
+                    const filterString = buildFilterString();
+                    
+                    // Process on the full-resolution working canvas
+                    workingCtx.clearRect(0, 0, workingCanvas.width, workingCanvas.height);
+                    workingCtx.filter = filterString;
+                    workingCtx.drawImage(originalImage, 0, 0);
+                    workingCtx.filter = 'none';
+                    
+                    // Update the display canvas with the result
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.drawImage(workingCanvas, 0, 0, canvas.width, canvas.height);
+                    
+                    // Store current values to track changes
+                    Object.keys(sliders).forEach(key => {
+                        lastEffectValues[key] = sliders[key].value;
+                    });
+                    
+                    showLoading(false);
+                    isProcessing = false;
+                } catch (error) {
+                    console.error("Error applying effects:", error);
+                    alert("An error occurred while processing the image.");
+                    showLoading(false);
+                    isProcessing = false;
+                }
+            }, 50);
+        }
+
+        /**
+         * Build CSS filter string from current slider values
+         */
+        function buildFilterString() {
+            let filterArray = [];
+            
+            // Add each effect if its value is different from default
+            const blur = parseFloat(sliders.smoothness.value);
+            if (blur > 0) filterArray.push(`blur(${blur}px)`);
+            
+            const brightness = parseInt(sliders.brightness.value);
+            if (brightness !== 100) filterArray.push(`brightness(${brightness}%)`);
+            
+            const contrast = parseInt(sliders.contrast.value);
+            if (contrast !== 100) filterArray.push(`contrast(${contrast}%)`);
+            
+            const saturation = parseInt(sliders.saturation.value);
+            if (saturation !== 100) filterArray.push(`saturate(${saturation}%)`);
+            
+            const grayscale = parseInt(sliders.grayscale.value);
+            if (grayscale > 0) filterArray.push(`grayscale(${grayscale}%)`);
+            
+            const sepia = parseInt(sliders.sepia.value);
+            if (sepia > 0) filterArray.push(`sepia(${sepia}%)`);
+            
+            return filterArray.join(' ');
+        }
+
+        /**
+         * Reset image to original state
+         */
+        function resetToOriginal() {
+            if (!originalImage) return;
+            
+            // Reset all sliders to default values
+            resetAllSliders();
+            
+            // Reset working canvas to original image
+            workingCanvas.width = originalImage.width;
+            workingCanvas.height = originalImage.height;
+            workingCtx.clearRect(0, 0, workingCanvas.width, workingCanvas.height);
+            workingCtx.drawImage(originalImage, 0, 0);
+            
+            // Update display canvas
+            setupCanvasForImage(originalImage);
+        }
+
+        /**
+         * Save the current image
+         */
+        function saveImage() {
+            if (!originalImage) return;
+            
+            try {
+                // Use the working canvas for full resolution
+                const dataURL = workingCanvas.toDataURL('image/png');
+                
+                // Create a download link
+                const link = document.createElement('a');
+                link.download = 'edited-image.png';
+                link.href = dataURL;
+                link.click();
+            } catch (error) {
+                console.error("Error saving image:", error);
+                alert("An error occurred while saving the image.");
+            }
+        }
+
+        /**
+         * Reset all sliders to default values
+         */
+        function resetAllSliders() {
+            sliders.smoothness.value = 0;
+            sliders.brightness.value = 100;
+            sliders.contrast.value = 100;
+            sliders.saturation.value = 100;
+            sliders.grayscale.value = 0;
+            sliders.sepia.value = 0;
+            
+            // Update output displays
+            Object.keys(sliders).forEach(key => {
+                outputs[key].textContent = sliders[key].value;
+            });
+        }
+
+        /**
+         * Clear everything
+         */
+        function clearAll() {
+            originalImage = null;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            workingCtx.clearRect(0, 0, workingCanvas.width, workingCanvas.height);
+            resetAllSliders();
+            updateImageDetails();
+            imageLoader.value = "";
+            fileNameDisplay.textContent = "";
+            
+            // Disable buttons
+            applyEffectsButton.disabled = true;
+            saveImageButton.disabled = true;
+            resetButton.disabled = true;
+        }
+
+        /**
+         * Show or hide loading spinner
+         */
+        function showLoading(show) {
+            loadingSpinner.style.display = show ? 'block' : 'none';
+            
+            // Optional: disable controls while loading
+            if (show) {
+                applyEffectsButton.disabled = true;
+                applyEffectsButton.classList.add('btn-disabled');
+                saveImageButton.disabled = true;
+                resetButton.disabled = true;
+            } else {
+                applyEffectsButton.disabled = false;
+                applyEffectsButton.classList.remove('btn-disabled');
+                saveImageButton.disabled = false;
+                resetButton.disabled = false;
+            }
+        }
+
+        /**
+         * Throttle function to limit how often a function can be called
+         */
+        function throttle(func, limit) {
+            let inThrottle;
+            return function() {
+                const args = arguments;
+                const context = this;
+                if (!inThrottle) {
+                    func.apply(context, args);
+                    inThrottle = true;
+                    setTimeout(() => inThrottle = false, limit);
+                }
+            };
+        }
+
+        /**
+         * Debounce function to delay execution until after a period of inactivity
+         */
+        function debounce(func, wait) {
+            let timeout;
+            return function() {
+                const context = this;
+                const args = arguments;
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(context, args), wait);
+            };
+        }
+
+        /**
+         * Handle window resize to maintain responsive canvas
+         */
+        window.addEventListener('resize', debounce(() => {
+            if (originalImage) {
+                setupCanvasForImage(originalImage);
+            }
+        }, 250));
+
+        // Initialize on load
+        window.addEventListener('load', () => {
+            canvas.width = 1;
+            canvas.height = 1;
+            ctx.fillStyle = '#f8f9fa';
+            ctx.fillRect(0, 0, 1, 1);
+        });
+    </script>
+</body>
+</html>
